@@ -137,14 +137,15 @@ class BoardManager extends StateNotifier<Board> {
   }
 
   // Generates tiles at random place on the board
-  Tile random(List<int> indexes) {
-    var i = 0;
-    var rng = Random();
-    do {
-      i = rng.nextInt(16);
-    } while (indexes.contains(i));
+  final rand = Random();
 
-    return Tile(const Uuid().v4(), 2, i);
+  /// Generates tiles at random place on the board.
+  /// Avoids occupied tiles.
+  Tile random(List<int> indexes) {
+    final candidates = Iterable.generate(16, (i) => i).toList();
+    candidates.removeWhere((i) => indexes.contains(i));
+    final index = candidates[rand.nextInt(candidates.length)];
+    return Tile(const Uuid().v4(), 2, index);
   }
 
   //Merge tiles
@@ -183,8 +184,9 @@ class BoardManager extends StateNotifier<Board> {
       indexes.add(tiles.last.index);
     }
 
-    //If tiles got moved then generate a new tile at random position of the available positions on the board.
-    if (tilesMoved) {
+    // If tiles got moved then generate a new tile at random position of the available positions on the board.
+    // If all tiles are occupied, then don't generate.
+    if (tilesMoved && indexes.length < 16) {
       tiles.add(random(indexes));
     }
     state = state.copyWith(score: score, tiles: tiles);
